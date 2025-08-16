@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  # Nginx Reverse Proxy (HTTP only for staging)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_staging
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - api
+      - web
+    networks:
+      - app_network
+
+  # API Service
+  api:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAME_API:-alphanet/api}:${API_TAG:-develop}
+    container_name: api_staging
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=staging
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - API_URL=${API_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - DOMAIN=${DOMAIN}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USER=${MAIL_USER}
+      - MAIL_PASS=${MAIL_PASS}
+      - MAIL_FROM=${MAIL_FROM}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - FACEBOOK_CLIENT_ID=${FACEBOOK_CLIENT_ID}
+      - FACEBOOK_CLIENT_SECRET=${FACEBOOK_CLIENT_SECRET}
+      - BKASH_APP_KEY=${BKASH_APP_KEY}
+      - BKASH_APP_SECRET=${BKASH_APP_SECRET}
+      - BKASH_USERNAME=${BKASH_USERNAME}
+      - BKASH_PASSWORD=${BKASH_PASSWORD}
+      - BKASH_BASE_URL=${BKASH_BASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-stack:
+        condition: service_started
+    networks:
+      - app_network
+    volumes:
+      - api_logs:/app/logs
+
+  # Web Service
+  web:
+    image: ${REGISTRY:-ghcr.io}/${IMAGE_NAME_WEB:-alphanet/web}:${WEB_TAG:-develop}
+    container_name: web_staging
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=staging
+      - NEXT_PUBLIC_API_URL=${API_URL}
+      - NEXTAUTH_URL=${FRONTEND_URL}
+      - NEXTAUTH_SECRET=${JWT_SECRET}
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - app_network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Redis Stack
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis_staging
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6380:6379"
+      - "127.0.0.1:8002:8001"
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    environment:
+      - REDIS_ARGS=--requirepass ${REDIS_PASSWORD} --save 900 1 --save 300 10 --save 60 10000
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local
+  api_logs:
+    driver: local

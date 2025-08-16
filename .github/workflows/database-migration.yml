@@ -1,0 +1,83 @@
+name: Database Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to run migration'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      migration_type:
+        description: 'Type of migration'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - reset
+          - seed
+
+jobs:
+  migrate-database:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: api/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./api
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: ./api
+        run: npx prisma generate
+
+      - name: Run database migration (deploy)
+        if: github.event.inputs.migration_type == 'deploy'
+        working-directory: ./api
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Reset database
+        if: github.event.inputs.migration_type == 'reset'
+        working-directory: ./api
+        run: |
+          npx prisma migrate reset --force
+          npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Seed database
+        if: github.event.inputs.migration_type == 'seed'
+        working-directory: ./api
+        run: npx prisma db seed
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Notify migration completion
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#database'
+          text: |
+            Database migration completed!
+            Environment: ${{ github.event.inputs.environment }}
+            Type: ${{ github.event.inputs.migration_type }}
+            Status: ${{ job.status }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
