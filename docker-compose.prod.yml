@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   # Nginx Reverse Proxy with SSL
@@ -30,11 +29,11 @@ services:
   certbot:
     image: certbot/certbot
     container_name: certbot
-    restart: unless-stopped
+    restart: "no"
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --force-renewal --email ${SSL_EMAIL} -d ${DOMAIN} --agree-tos --no-eff-email
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
     depends_on:
       - nginx
 
