@@ -1,4 +1,4 @@
-# AlphaNet Testing Guide
+# Neyamot Enterprise Testing Guide
 
 Complete step-by-step testing documentation for local development, staging, and production deployments.
 
@@ -98,7 +98,7 @@ nano .env.local
 **Local Environment Variables (.env.local):**
 ```bash
 # Database
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/alphanet_dev?schema=public"
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/neyamot_dev?schema=public"
 
 # Redis
 REDIS_HOST=localhost
@@ -237,12 +237,12 @@ docker-compose -f docker-compose.dev.yml logs web | grep -i "api"
 
 ```bash
 # 1. Setup staging server (run on staging server)
-sudo mkdir -p /opt/alphanet-staging
-sudo chown $USER:$USER /opt/alphanet-staging
-cd /opt/alphanet-staging
+sudo mkdir -p /opt/neyamot-staging
+sudo chown $USER:$USER /opt/neyamot-staging
+cd /opt/neyamot-staging
 
 # 2. Clone repository
-git clone https://github.com/yourusername/alphanet.git .
+git clone https://github.com/yourusername/neyamot-enterprise.git .
 git checkout develop
 
 # 3. Setup staging environment
@@ -289,7 +289,7 @@ curl -X POST http://staging.neyamotenterprise.com/api/auth/register \
   -d '{"email":"staging@example.com","password":"password123","name":"Staging User"}'
 
 # 5. Test database connectivity
-docker-compose -f docker-compose.staging.yml exec postgres psql -U postgres -d alphanet_staging -c "SELECT COUNT(*) FROM \"User\";"
+docker-compose -f docker-compose.staging.yml exec postgres psql -U postgres -d neyamot_staging -c "SELECT COUNT(*) FROM \"User\";"
 ```
 
 ### Step 4: Test Staging Load Balancing
@@ -314,12 +314,12 @@ docker-compose -f docker-compose.staging.yml logs nginx
 
 ```bash
 # 1. Setup production server (run on production server)
-sudo mkdir -p /opt/alphanet-production
-sudo chown $USER:$USER /opt/alphanet-production
-cd /opt/alphanet-production
+sudo mkdir -p /opt/neyamot-production
+sudo chown $USER:$USER /opt/neyamot-production
+cd /opt/neyamot-production
 
 # 2. Clone repository
-git clone https://github.com/yourusername/alphanet.git .
+git clone https://github.com/yourusername/neyamot-enterprise.git .
 
 # 3. Setup production environment
 cp .env.example .env
@@ -675,4 +675,4 @@ docker network ls
 docker network inspect apps_app_network
 ```
 
-This comprehensive testing guide covers all aspects of your AlphaNet deployment from local development to production. Follow each section step-by-step to ensure your application is working correctly at every stage.
+This comprehensive testing guide covers all aspects of your Neyamot Enterprise deployment from local development to production. Follow each section step-by-step to ensure your application is working correctly at every stage.

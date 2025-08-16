@@ -1,6 +1,6 @@
-# GitHub CI/CD Setup Guide
+# GitHub CI/CD Setup Guide for Neyamot Enterprise
 
-This guide will help you set up the complete CI/CD pipeline for your AlphaNet project.
+Complete guide for setting up GitHub Actions CI/CD pipeline for Neyamot Enterprise production deployment.
 
 ## 🔧 Required GitHub Secrets
 
@@ -29,7 +29,7 @@ STAGING_PORT=22
 #### Database Secrets
 ```
 # Production Database
-DATABASE_URL=postgresql://user:password@host:5432/database
+DATABASE_URL=postgresql://neyamot_user:PASSWORD@postgres:5432/neyamot_db?schema=public
 
 # Staging Database  
 STAGING_DATABASE_URL=postgresql://user:password@host:5432/staging_database
@@ -59,7 +59,8 @@ sudo chown $USER:$USER /opt/alphanet-production
 
 # Clone repository
 cd /opt/alphanet-production
-git clone https://github.com/yourusername/alphanet.git .
+git clone https://github.com/yourusername/neyamot-enterprise.git
+cd neyamot-enterprise
 
 # Copy environment file
 cp .env.example .env
@@ -92,14 +93,14 @@ chmod +x deploy.sh
 Generate SSH keys for deployment:
 
 ```bash
-# Generate SSH key pair
-ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy
+# Generate SSH key for Neyamot Enterprise deployment
+ssh-keygen -t ed25519 -f ~/.ssh/neyamot_deploy -N ""
 
-# Add public key to authorized_keys on both servers
-cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
+# Add public key to authorized_keys
+cat ~/.ssh/neyamot_deploy.pub >> ~/.ssh/authorized_keys
 
-# Copy private key content for GitHub secrets
-cat ~/.ssh/github_deploy
+# Copy private key for GitHub Secrets
+cat ~/.ssh/neyamot_deploy
 ```
 
 ## 🚀 Workflow Overview

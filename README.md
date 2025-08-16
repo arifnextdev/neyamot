@@ -1,6 +1,6 @@
-# AlphaNet Production Deployment Guide
+# Neyamot Enterprise Production Deployment Guide
 
-A production-ready NestJS API and Next.js web application with Docker, Nginx reverse proxy, and SSL certificates.
+Complete production deployment guide for Neyamot Enterprise - a modern web application with NestJS API backend and Next.js frontend, featuring Docker containerization, Nginx reverse proxy, and SSL certificates.
 
 ## 🏗️ Architecture
 
@@ -24,8 +24,8 @@ A production-ready NestJS API and Next.js web application with Docker, Nginx rev
 
 1. **Clone and setup environment**:
    ```bash
-   git clone <repository>
-   cd apps
+   git clone https://github.com/yourusername/neyamot-enterprise.git
+   cd neyamot-enterprise/apps
    cp .env.example .env
    ```
 
@@ -37,8 +37,15 @@ A production-ready NestJS API and Next.js web application with Docker, Nginx rev
    SSL_EMAIL=admin@neyamotenterprise.com
    
    # Database credentials (will be auto-generated if not set)
+   DATABASE_URL="postgresql://neyamot_user:your_secure_password@postgres:5432/neyamot_db?schema=public"
+   POSTGRES_DB=neyamot_db
+   POSTGRES_USER=neyamot_user
    POSTGRES_PASSWORD=your_secure_password
+   
+   # Redis credentials
    REDIS_PASSWORD=your_redis_password
+   
+   # JWT secret
    JWT_SECRET=your_jwt_secret
    
    # OAuth credentials
@@ -244,6 +251,8 @@ Nginx is configured to load balance between multiple instances automatically.
 | `DOMAIN` | Your domain name | Yes | - |
 | `SSL_EMAIL` | Email for SSL certificates | Yes | - |
 | `DATABASE_URL` | PostgreSQL connection string | Yes | - |
+| `POSTGRES_DB` | Database name | Yes | - |
+| `POSTGRES_USER` | Database user | Yes | - |
 | `POSTGRES_PASSWORD` | Database password | Yes | - |
 | `REDIS_PASSWORD` | Redis password | Yes | - |
 | `JWT_SECRET` | JWT signing secret | Yes | - |
